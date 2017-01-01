@@ -1,4 +1,4 @@
 OpenShift templates
 ==============
 
-[Memcached server](blob/memcached/REAMDE.md)
+[Memcached server](memcached)
