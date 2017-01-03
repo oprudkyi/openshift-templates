@@ -12,15 +12,7 @@ Usage
 
 ```
 oc login -u system:admin
-```
-
-```
-oc create -f memcached.yaml -n openshift
-```
-or
-
-```
-oc replace -f memcached.yaml -n openshift
+oc replace --force -f memcached.yaml -n openshift
 
 ```
 

@@ -9,7 +9,8 @@ labels:
 metadata:
   annotations:
     description: 'Memcached service. 
-      It uses memcached image from official repository at docker hub'
+      It uses memcached image from official repository at docker hub.
+      https://hub.docker.com/r/library/memcached/'
     tags: memcached,database
   creationTimestamp: null
   name: memcached
@@ -86,14 +87,10 @@ objects:
           - -m
           - ${CACHE_SIZE}
           readinessProbe:
-            #todo - make readness more logical
             exec:
               command:
-              - /bin/sh
-              - -i
-              - -c
-              - echo 
-              - "1"
+              - /usr/bin/pgrep
+              - memcached
             initialDelaySeconds: 5
             timeoutSeconds: 1
           resources:
