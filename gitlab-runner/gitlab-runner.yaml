@@ -1,0 +1,203 @@
+#This file is part of https://gitlab.com/oprudkyi/openshift-templates
+#
+#Partially based on https://gitlab.com/gitlab-org/omnibus-gitlab/blob/ux-demo/docker/openshift-ci-template.json
+#
+#Copyright (c) 2017 Oleksii Prudkyi
+#
+apiVersion: v1
+kind: Template
+labels:
+  template: gitlab-runner-template
+metadata:
+  annotations:
+    description: 'gitlab-runner service. 
+      It uses gitlab-runner image from official repository at docker hub.
+      https://hub.docker.com/r/gitlab/gitlab-runner/
+      Before you start, please create Service Account with appropriate role/SCC, that allows gitlab-runner to create wroker pods:
+        oc create serviceaccount sa-gitlab-runner -n CURRENT_PROJECT_NAME
+        oc adm policy add-role-to-user admin -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
+        oc adm policy add-scc-to-user anyuid  -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
+      '
+    tags: gitlab-runner
+  creationTimestamp: null
+  name: gitlab-runner
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: gitlab-runner
+    name: is-gitlab-runner
+  spec:
+    dockerImageRepository: ""
+    tags:
+      -
+       from:
+         kind: DockerImage
+         name: gitlab/gitlab-runner:${GITLAB_RUNNER_IMAGE_DOCKER_TAG}
+       name: gitlab_runner_pseudo_tag
+       importPolicy:
+         scheduled: true
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: ${GITLAB_RUNNER_SERVICE_NAME}
+  spec:
+    portalIP: ""
+    ports:
+    - name: 22-ssh
+      nodePort: 0
+      port: 22
+      protocol: TCP
+      targetPort: 22
+    selector:
+      name: ${GITLAB_RUNNER_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    name: dc-${GITLAB_RUNNER_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${GITLAB_RUNNER_SERVICE_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: ${GITLAB_RUNNER_SERVICE_NAME}
+      spec:
+        containers:
+        - capabilities: {}
+          image: ' '
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - /usr/bin/pgrep
+              - gitlab-ci-multi
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          name: cnt-gitlab-runner
+          ports:
+          - containerPort: 22
+            protocol: TCP
+          args:
+              - run 
+              -  --working-directory
+              - /home/gitlab-runner
+              -  --config
+              - /etc/gitlab-runner/config.toml
+              - --service
+              - gitlab-runner
+              - --user
+              - gitlab-runner
+          readinessProbe:
+            exec:
+              command:
+              - /usr/bin/pgrep
+              - gitlab-ci-multi
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+          securityContext:
+            capabilities: {}
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /etc/gitlab-runner
+            name: vol-gitlab-runner-config
+        serviceAccountName: sa-gitlab-runner
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        volumes:
+        - configMap:
+            name: cm-gitlab-runner
+          name: vol-gitlab-runner-config
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - cnt-gitlab-runner
+        from:
+          kind: ImageStreamTag
+          name: is-gitlab-runner:gitlab_runner_pseudo_tag
+        lastTriggeredImage: ""
+      type: ImageChange
+    - type: ConfigChange
+  status: {}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-gitlab-runner
+  data:
+    config.toml: |
+      concurrent = ${GITLAB_RUNNER_JOBS}
+      check_interval = 0
+  
+      [[runners]]
+        name = "GitLab Runner"
+        url = "${GITLAB_RUNNER_CI_URL}"
+        token = "${GITLAB_RUNNER_TOKEN}"
+        executor = "kubernetes"
+        [runners.cache]
+        [runners.kubernetes]
+          namespace = "${GITLAB_RUNNER_NAMESPACE}"
+          privileged = false
+          host = ""
+          cert_file = ""
+          key_file = ""
+          ca_file = ""
+          image = ""
+          cpus = ""
+          memory = ""
+          service_cpus = ""
+          service_memory = ""
+          helper_cpus = ""
+          helper_memory = ""
+          helper_image = ""
+
+parameters:
+- description: The GitLab CI coordinator URL (e.g. https://gitlab.com/).
+  displayName: GitLab CI URL
+  name: GITLAB_RUNNER_CI_URL
+  required: true
+  value: https://gitlab.com/ci
+- description: The runner token, it's not the one from Runners page. Please run 'gitlab-runner register' locally and then get real token from /etc/gitlab-runner/config.toml.
+  displayName: GitLab Runner Token (It is not the one from Runners page, but the one from config.toml)
+  name: GITLAB_RUNNER_TOKEN
+  required: true
+- description: "The namespace/project where actual runners will run (requires correct scc/role config). Use current project name if unsure. " 
+  displayName: GitLab Runners Namespace
+  name: GITLAB_RUNNER_NAMESPACE
+  required: true
+- description: The count of jobs can be run concurrently.
+  displayName: GitLab Runner jobs
+  name: GITLAB_RUNNER_JOBS
+  required: true
+  value: "2"
+- description: Maximum amount of memory the container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  value: 512Mi
+- description: The name of the OpenShift Service exposed for the GitLab Runner.
+  displayName: GitLab Runner Service Name
+  name: GITLAB_RUNNER_SERVICE_NAME
+  required: true
+  value: gitlab-runner
+- description: Tag of GitLab Runner image (alpine or latest). Check https://hub.docker.com/r/gitlab/gitlab-runner/tags/ for list of supported values 
+  displayName: Image Tag at Docker Hub
+  name: GITLAB_RUNNER_IMAGE_DOCKER_TAG
+  value: "alpine"
