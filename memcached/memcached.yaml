@@ -20,7 +20,7 @@ objects:
     creationTimestamp: null
     labels:
       app: memcached
-    name: memcached
+    name: is-memcached
   spec:
     dockerImageRepository: ""
     tags:
@@ -56,7 +56,7 @@ objects:
   kind: DeploymentConfig
   metadata:
     creationTimestamp: null
-    name: ${MEMCACHED_SERVICE_NAME}
+    name: dc-${MEMCACHED_SERVICE_NAME}
   spec:
     replicas: 1
     selector:
@@ -78,7 +78,7 @@ objects:
             tcpSocket:
               port: 11211
             timeoutSeconds: 1
-          name: memcached
+          name: cnt-memcached
           ports:
           - containerPort: 11211
             protocol: TCP
@@ -109,10 +109,10 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - memcached
+        - cnt-memcached
         from:
           kind: ImageStreamTag
-          name: memcached:memcached_pseudo_tag
+          name: is-memcached:memcached_pseudo_tag
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
