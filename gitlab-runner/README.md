@@ -72,7 +72,6 @@ Usage
   - GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
   - GitLab Runners Namespace : `prj-gitlab-runner`
 
-
 7. As well there are some additional options you may configure - docker hub tags for GitLab-Runner and Minio, login/password for Minio etc, though defaults will work as well
 
 8. After pressing update the deployment will start, it may take few minutes to download required images and preconfigure them 
