@@ -17,7 +17,7 @@ metadata:
       GitLab Runner Service. 
       It uses GitLab Runner image from official repository at docker hub.
       https://hub.docker.com/r/gitlab/gitlab-runner/
-      Before you start, please create Service Account with appropriate role/SCC, that allows gitlab-runner to create wroker pods
+      Before you start, please create Service Account with appropriate role/SCC, that allows gitlab-runner to create worker pods
         oc create serviceaccount sa-gitlab-runner -n CURRENT_PROJECT_NAME
         oc adm policy add-role-to-user admin -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
         oc adm policy add-scc-to-user anyuid  -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
