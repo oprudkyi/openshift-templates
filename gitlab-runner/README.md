@@ -68,7 +68,6 @@ Usage
 5. Go to web console https://MASTER_IP:8443/console/project/prj-gitlab-runner/overview (where MASTER_IP is IP where cluster is bound) and press "Add to Project" and select "gitlab-runner" template
 
 6. Fill required fields
-
   - GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
   - GitLab Runners Namespace : `prj-gitlab-runner`
 
