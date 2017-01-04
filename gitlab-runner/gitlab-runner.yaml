@@ -173,10 +173,11 @@ objects:
           helper_image = ""
         [runners.cache]
           Type = "s3"
-          ServerAddress = "http://${MINIO_SERVICE_NAME}/"
+          ServerAddress = "${MINIO_SERVICE_NAME}:80"
           AccessKey = "${MINIO_ACCESS_KEY}"
           SecretKey = "${MINIO_SECRET_KEY}"
           BucketName = "bkt-gitlab-runner"
+          Insecure = true
 
 ### minio integration for cache
 # based on the https://github.com/lwolf/kubernetes-gitlab/tree/master/minio
