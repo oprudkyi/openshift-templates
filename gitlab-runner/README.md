@@ -69,8 +69,9 @@ Usage
 
 6. Fill required fields
 
-	- GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
-	- GitLab Runners Namespace : `prj-gitlab-runner`
+  - GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
+  - GitLab Runners Namespace : `prj-gitlab-runner`
+
 
 7. As well there are some additional options you may configure - docker hub tags for GitLab-Runner and Minio, login/password for Minio etc, though defaults will work as well
 
