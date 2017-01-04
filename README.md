@@ -1,4 +1,4 @@
-OpenShift templates
+[OpenShift Origin](https://www.openshift.org/) templates
 ==============
 
 [Memcached server](memcached)
