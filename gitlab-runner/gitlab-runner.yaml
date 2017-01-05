@@ -27,6 +27,24 @@ metadata:
   name: gitlab-runner
 objects:
 - apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: sa-gitlab-runner
+- apiVersion: v1
+  kind: RoleBinding
+  metadata:
+    name: edit
+  groupNames: null
+  subjects:
+    - kind: ServiceAccount
+      name: sa-gitlab-runner
+  roleRef:
+    name: edit
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: sa-minio
+- apiVersion: v1
   kind: ImageStream
   metadata:
     creationTimestamp: null
@@ -284,7 +302,7 @@ objects:
           volumeMounts:
           - name: vol-minio-data-store
             mountPath: /export
-        serviceAccountName: sa-gitlab-runner
+        serviceAccountName: sa-minio
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         volumes:

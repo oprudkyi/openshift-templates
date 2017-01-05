@@ -6,7 +6,7 @@ This is a template for easy deployment of GitLab Runner CI into OpenShift cluste
  - uses official [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner) image from [gitlab docker repo](https://hub.docker.com/r/gitlab/gitlab-runner/) 
  - caching is implemented via official [Minio Cloud Storage](https://www.minio.io/) image from [minio docker repo](https://hub.docker.com/r/minio/minio/)
  - provides sane default options and simple configurator
- - containers are run with admin rights and anyuid SCC (allows to create new docker containers for CI and run them as root)
+ - containers are runnning with `anyuid` SCC (allows to create new docker containers for CI and run them as root)
  - autoupdate is enabled 
  - partially is based on kubernetes configs 
 	
@@ -35,7 +35,7 @@ Prerequisites
  - admin access to server for setting rights for service account 
 
 
-Usage
+Installation
 ==============
 
 1. Create new project/namespace 
@@ -51,38 +51,81 @@ Usage
 	oc create -f https://gitlab.com/oprudkyi/openshift-templates/raw/master/gitlab-runner/gitlab-runner.yaml -n prj-gitlab-runner
 	```
 
-3. Create Service Account and give him admin role in project
-
-	```sh
-	oc create serviceaccount sa-gitlab-runner -n prj-gitlab-runner
-	oc adm policy add-role-to-user admin -z sa-gitlab-runner -n prj-gitlab-runner 
-	```
-
-4. Give him ability to run as root inside containers 
+3. Setup Security Context Constraints (SCC) for service accounts used for running containers (`anyuid` means commands inside containers can run as root)
 
 	```sh
 	oc login -u system:admin
 	oc adm policy add-scc-to-user anyuid -z sa-gitlab-runner -n prj-gitlab-runner
+	oc adm policy add-scc-to-user anyuid -z sa-minio -n prj-gitlab-runner
 	```
 
-5. Go to web console https://MASTER-IP:8443/console/project/prj-gitlab-runner/overview (where MASTER-IP is IP where cluster is bound) and press "Add to Project" and select "gitlab-runner" template
+4. Go to web console https://MASTER-IP:8443/console/project/prj-gitlab-runner/overview (where MASTER-IP is IP where cluster is bound) and press "Add to Project" and select "gitlab-runner" template
 
-6. Fill required fields
+5. Fill required fields
   - GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
   - GitLab Runners Namespace : `prj-gitlab-runner`
 
-7. As well there are some additional options you may configure - docker hub tags for GitLab-Runner and Minio, login/password for Minio etc, though defaults will work as well
+6. As well there are some additional options you may configure - docker hub tags for GitLab-Runner and Minio, login/password for Minio etc, though defaults will work as well
 
-8. After pressing update the deployment will start, it may take few minutes to download required images and preconfigure them 
+7. After pressing update the deployment will start, it may take few minutes to download required images and preconfigure them 
 
-9. In your Gitlab Project check "Runners" page to have runner activated 
+8. In your Gitlab Project check "Runners" page to have runner activated 
 
-10. Run some CI job , there will be something like 
+9. Run some CI job , there will be something like 
 
 	```
 	Waiting for pod prj-gitlab-runner/runner-86251ae3-project-1142978-concurrent-0uzqax to be running, status is Pending
 	```
 	in log output of CI 
+
+
+Persistent cache in directory of your host (optional)
+==============
+
+Minio server is not attached to any permanent storage and uses an ephemeral storage - [emptyDir](http://kubernetes.io/docs/user-guide/volumes/#emptydir). When Minio Service/Pod is stopped or restarted all data will be deleted. 
+Though, while Minio is running, cache is available locally via some path like '/var/lib/origin/openshift.local.volumes/pods/de1d0ff7-d2bb-11e6-8d5b-74d02b8fa488/volumes/kubernetes.io~empty-dir/vol-minio-data-store'
+
+So, you may need to point `vol-minio-data-store` volume to persistent storage or periodically backup data.
+
+While you can use any storage - NFC/Ceph RDB/GlusterFS and [more](https://docs.openshift.org/latest/install_config/persistent_storage/index.html), 
+for simple cluster setup (with small number of nodes) host path is the simplest. Though if you have more then one Node you should mantain cleanup/sync between nodes by self. 
+
+Next steps allow to use local directory `/cache/gitlab-runner` as storage for Minio 
+
+1. Setup Security Context Constraints (SCC) for Minio container to access Node's filesystem
+
+	```sh
+	oc login -u system:admin
+	oc adm policy add-scc-to-user hostmount-anyuid -z sa-minio -n prj-gitlab-runner
+	```
+3. Edit `dc-minio-service` deployment config via OpenSift Web console 
+at https://MASTER-IP:8443/console/project/prj-gitlab-runner/edit/yaml?kind=DeploymentConfig&name=dc-minio-service 
+or from console 
+	```sh
+	oc project prj-gitlab-runner
+	oc edit dc/dc-minio-service
+	```
+
+  Replace 
+  ```
+      volumes:
+      - emptyDir: {}
+        name: vol-minio-data-store
+  ```
+
+  with 
+  ```
+      volumes:
+      - hostPath: 
+          path: /cache/gitlab-runner
+        name: vol-minio-data-store
+  ```
+
+  After saving, Minio server will be automatically restarted and you can access cache via 
+  Minio Web console http://minio-service.prj-gitlab-runner.svc.cluster.local/minio/bkt-gitlab-runner/, 
+  you can try to upload file and check if it exists at the `/cache/gitlab-runner`
+  as well you can force new deploy (restart) of minio and see if it keeps files on restart
+
 
 Management
 ==============
@@ -103,67 +146,3 @@ Management
 
 - Minio Web console is available at http://minio-service.prj-gitlab-runner.svc.cluster.local/ or just grab IP under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/services/minio-service and access/secret keys under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-minio-service?tab=environment
 
-- Minio server is not attached to any permanent storage and all data will be lost on restart of Pod, you may need to point `vol-minio-data-store volume` to permanent storage or periodically backup data 
-(it is stored locally under some path like '/var/lib/origin/openshift.local.volumes/pods/de1d0ff7-d2bb-11e6-8d5b-74d02b8fa488/volumes/kubernetes.io~empty-dir/vol-minio-data-store')
-
-	
-Persistent cache 
-==============
-
-While you can use any storage - NFC/Ceph RDB/GlusterFS and [more](https://docs.openshift.org/latest/install_config/persistent_storage/index.html). 
-For simple cluster setup (with small number of nodes) host path is the simplest. Though you should mantain cleanup/sync between nodes by self. 
-
-Next steps allow to use local directory `/cache/gitlab-runner` as storage for minio 
-
-1. Create special service account to allow host access
-
-	```sh
-	oc login -u developer
-	oc create serviceaccount sa-host-access -n prj-gitlab-runner
-	```
-
-2. Give him rights to access local filesystem
-
-	```sh
-	oc login -u system:admin
-	oc adm policy add-scc-to-user hostmount-anyuid -z sa-host-access -n prj-gitlab-runner
-	```
-3. Edit `dc-minio-service` deployment config via OpenSift Web console 
-at https://MASTER-IP:8443/console/project/prj-gitlab-runner/edit/yaml?kind=DeploymentConfig&name=dc-minio-service 
-or from console 
-	```sh
-	oc project prj-gitlab-runner
-	oc edit dc/dc-minio-service
-	```
-  
-  Replace
-  ```
-  serviceAccountName: sa-gitlab-runner
-  serviceAccount: sa-gitlab-runner
-  ```
-
-  with (keep indentation in file inact)
-  ```
-  serviceAccountName: sa-host-access
-  serviceAccount: sa-host-access
-  ```
-
-  And replace 
-  ```
-      volumes:
-        - name: vol-minio-data-store
-          emptyDir: {}
-  ```
-
-  with 
-  ```
-      volumes:
-        - name: vol-minio-data-store
-          hostPath: 
-            path: /cache/gitlab-runner
-  ```
-
-  After saving Minio server will be automatically restarted and you can access cache via 
-  Minio Web console http://minio-service.prj-gitlab-runner.svc.cluster.local/minio/bkt-gitlab-runner/, 
-  you can try to upload file and check if it exists at the `/cache/gitlab-runner`
-  as well you can force new deploy (restart) of minio and see if it keeps files on restart
