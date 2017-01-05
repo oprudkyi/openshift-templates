@@ -65,7 +65,7 @@ Usage
 	oc adm policy add-scc-to-user anyuid -z sa-gitlab-runner -n prj-gitlab-runner
 	```
 
-5. Go to web console https://MASTER_IP:8443/console/project/prj-gitlab-runner/overview (where MASTER_IP is IP where cluster is bound) and press "Add to Project" and select "gitlab-runner" template
+5. Go to web console https://MASTER-IP:8443/console/project/prj-gitlab-runner/overview (where MASTER-IP is IP where cluster is bound) and press "Add to Project" and select "gitlab-runner" template
 
 6. Fill required fields
   - GitLab Runner Token : one from `/etc/gitlab-runner/config.toml`
@@ -87,14 +87,83 @@ Usage
 Management
 ==============
 
-- You can additionally configure gitlab runner via web console at https://MASTER_IP:8443/console/project/prj-gitlab-runner/browse/config-maps/cm-gitlab-runner , by example count of concurent jobs etc, see all possible options at GitLab Runner [docs](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
+- You can additionally configure gitlab runner via web console at https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/config-maps/cm-gitlab-runner , by example count of concurent jobs etc, see all possible options at GitLab Runner [docs](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
 
-	After editing you will need to manually "Deploy" gitlab-runner deployment - https://MASTER_IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-gitlab-runner-service
+	Alternatively you can use console for editing:
+	```sh
+	oc project prj-gitlab-runner
+	oc edit configmap/cm-gitlab-runner
+	```
 
-- Minio Web console is available at http://minio-service.prj-gitlab-runner.svc.cluster.local/ or just grab IP under https://MASTER_IP:8443/console/project/prj-gitlab-runner/browse/services/minio-service and access/secret keys under https://MASTER_IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-minio-service?tab=environment
+	After editing you will need to manually "Deploy" gitlab-runner deployment - https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-gitlab-runner-service or via console 
+	```sh
+	oc project prj-gitlab-runner
+	oc deploy dc-gitlab-runner-service --latest --follow=true
+	```
+
+- Minio Web console is available at http://minio-service.prj-gitlab-runner.svc.cluster.local/ or just grab IP under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/services/minio-service and access/secret keys under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-minio-service?tab=environment
 
 - Minio server is not attached to any permanent storage and all data will be lost on restart of Pod, you may need to point `vol-minio-data-store volume` to permanent storage or periodically backup data 
 (it is stored locally under some path like '/var/lib/origin/openshift.local.volumes/pods/de1d0ff7-d2bb-11e6-8d5b-74d02b8fa488/volumes/kubernetes.io~empty-dir/vol-minio-data-store')
 
 	
+Persistent cache 
+==============
 
+While you can use any storage - NFC/Ceph RDB/GlusterFS and [more](https://docs.openshift.org/latest/install_config/persistent_storage/index.html). 
+For simple cluster setup (with small number of nodes) host path is the simplest. Though you should mantain cleanup/sync between nodes by self. 
+
+Next steps allow to use local directory `/cache/gitlab-runner` as storage for minio 
+
+1. Create special service account to allow host access
+
+	```sh
+	oc login -u developer
+	oc create serviceaccount sa-host-access -n prj-gitlab-runner
+	```
+
+2. Give him rights to access local filesystem
+
+	```sh
+	oc login -u system:admin
+	oc adm policy add-scc-to-user hostmount-anyuid -z sa-host-access -n prj-gitlab-runner
+	```
+3. Edit `dc-minio-service` deployment config via OpenSift Web console 
+at https://MASTER-IP:8443/console/project/prj-gitlab-runner/edit/yaml?kind=DeploymentConfig&name=dc-minio-service 
+or from console 
+	```sh
+	oc project prj-gitlab-runner
+	oc edit dc/dc-minio-service
+	```
+  
+  Replace
+  ```
+  serviceAccountName: sa-gitlab-runner
+  serviceAccount: sa-gitlab-runner
+  ```
+
+  with (keep indentation in file inact)
+  ```
+  serviceAccountName: sa-host-access
+  serviceAccount: sa-host-access
+  ```
+
+  And replace 
+  ```
+      volumes:
+        - name: vol-minio-data-store
+          emptyDir: {}
+  ```
+
+  with 
+  ```
+      volumes:
+        - name: vol-minio-data-store
+          hostPath: 
+            path: /cache/gitlab-runner
+  ```
+
+  After saving Minio server will be automatically restarted and you can access cache via 
+  Minio Web console http://minio-service.prj-gitlab-runner.svc.cluster.local/minio/bkt-gitlab-runner/, 
+  you can try to upload file and check if it exists at the `/cache/gitlab-runner`
+  as well you can force new deploy (restart) of minio and see if it keeps files on restart
