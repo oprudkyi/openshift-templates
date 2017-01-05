@@ -146,3 +146,9 @@ Management
 
 - Minio Web console is available at http://minio-service.prj-gitlab-runner.svc.cluster.local/ or just grab IP under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/services/minio-service and access/secret keys under https://MASTER-IP:8443/console/project/prj-gitlab-runner/browse/dc/dc-minio-service?tab=environment
 
+License
+==============
+
+OpenShift Origin template for GitLab Runner is licensed under [The MIT License (MIT)](LICENSE).
+
+[Blog](http://oleksii-prudkyi.blogspot.com/2017/01/openshift-origin-template-for-gitlab-runner.html)
