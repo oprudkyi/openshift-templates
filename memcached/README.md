@@ -12,7 +12,7 @@ Usage
 
 ```
 oc login -u system:admin
-oc replace --force -f memcached.yaml -n openshift
+oc replace --force -f https://gitlab.com/oprudkyi/openshift-templates/raw/master/memcached/memcached.yaml -n openshift
 
 ```
 
