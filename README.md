@@ -3,4 +3,7 @@
 
 [Memcached server](memcached)
 
+[MailCatcher](mailcatcher)
+
 [GitLab Runner](gitlab-runner)
+
