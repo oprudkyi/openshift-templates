@@ -8,7 +8,7 @@ labels:
   template: mailcatcher-template
 metadata:
   annotations:
-      description: 'MailCatcher (https://mailcatcher.me/ ) runs a super simple SMTP server which catches any 
+      description: 'MailCatcher https://mailcatcher.me runs a super simple SMTP server which catches any 
       message sent to it to display in a web interface. 
       It uses mailcatcher image from unofficial repository at docker hub.
       https://hub.docker.com/r/schickling/mailcatcher/'
