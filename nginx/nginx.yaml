@@ -260,6 +260,10 @@ parameters:
 
 objects:
 - apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: sa-nginx
+- apiVersion: v1
   kind: ImageStream
   metadata:
     creationTimestamp: null
@@ -360,6 +364,7 @@ objects:
           - mountPath: /etc/nginx/openshift
             name: vol-${NGINX_SERVICE_NAME}-nginx-conf
           terminationMessagePath: /dev/termination-log
+        serviceAccountName: sa-nginx
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         volumes:
