@@ -23,6 +23,7 @@ metadata:
         oc adm policy add-scc-to-user anyuid -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
         oc adm policy add-scc-to-user anyuid -z sa-minio -n CURRENT_PROJECT_NAME
 
+    openshift.io/display-name: GitLab Runner Service
     tags: gitlab-runner
   creationTimestamp: null
   name: gitlab-runner
