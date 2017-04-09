@@ -7,6 +7,8 @@
 
 [MailCatcher](mailcatcher) -  a super simple SMTP server which catches any message sent to it to display in a web interface.
 
+[Nginx](nginx) -  an HTTP and reverse proxy server, a mail proxy server, and a generic TCP/UDP proxy server.
+
 [GitLab Runner](gitlab-runner) - template for [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner) with Minio server as cache storage (optional)
 
 
