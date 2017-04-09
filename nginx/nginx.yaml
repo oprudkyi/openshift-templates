@@ -1,0 +1,383 @@
+#This file is part of https://gitlab.com/oprudkyi/openshift-templates
+#
+#Copyright (c) 2017 Oleksii Prudkyi
+#
+apiVersion: v1
+kind: Template
+labels:
+  template: nginx
+metadata:
+  creationTimestamp: null
+  name: nginx
+  annotations:
+    description: |
+        Runs official Nginx images from official repository at docker hub - https://hub.docker.com/r/library/nginx/, 
+        but can use other images as well.
+
+        This is a generic template, that moves Nginx configuration files (nginx.conf etc) into ConfigMap, you will need to configure it 
+        for your needs via ConfigMap and by attaching presistent volumes with static content or forwarding requests to fastcgi services.
+
+    openshift.io/display-name: Nginx
+message: >-
+  The following service has been created in your project:
+  ${NGINX_SERVICE_NAME}.
+
+  All Nginx settings are stored in cm-${NGINX_SERVICE_NAME}-nginx-config ConfigMap
+
+  With default settings it will serve /usr/share/nginx/html from image.
+parameters:
+- description: The exposed hostname that will route to the nginx service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+- displayName: Nginx Service Name
+  name: NGINX_SERVICE_NAME
+  required: true
+  value: nginx
+- description: |
+    Repositiry of Nginx image. Will use https://hub.docker.com/r/library/nginx/  
+  displayName: Image Repository at Docker Hub
+  name: DOCKER_REPOSITORY
+  value: "nginx"
+  required: true
+- description: |
+    Tag of image (latest,stable,alphine,stable-alpine). Check https://hub.docker.com/r/library/nginx/tags/ 
+    for list of supported values 
+  displayName: Image Tag at Docker Hub
+  name: DOCKER_TAG
+  value: "stable-alpine"
+  required: true
+
+- description: Maximum amount of memory the container can use 
+  displayName: Memory Limit
+  name: NGINX_MEMORY_LIMIT
+  required: true
+  value: 512Mi
+- description: nginx.conf template. It will be copied to config map and used instead of /etc/nginx/nginx.conf 
+  displayName: nginx.conf 
+  name: NGINX_CONFIG
+  required: true
+  value: |
+    worker_processes  1;
+    #worker_processes  auto;
+    worker_rlimit_nofile 2048;
+
+
+    #error_log  logs/error.log;
+    #error_log  logs/error.log  notice;
+    #error_log  logs/error.log  info;
+
+    events {
+        worker_connections  1024;
+        multi_accept on;
+        use epoll;
+    }
+
+
+    http {
+        #fix temp paths
+        client_body_temp_path /tmp/nginx/client_temp 1 2;
+        proxy_temp_path /tmp/nginx/proxy_temp 1 2;
+        fastcgi_temp_path /tmp/nginx/fastcgi_temp 1 2;
+        uwsgi_temp_path /tmp/nginx/uwsgi_temp 1 2;
+        scgi_temp_path /tmp/nginx/scgi_temp 1 2;
+
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+        #                  '$status $body_bytes_sent "$http_referer" '
+        #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+        #access_log  logs/access.log  main;
+        access_log /dev/stdout;
+        error_log /dev/stderr;
+
+        sendfile        on;
+        server_tokens off;
+        tcp_nopush on;
+        tcp_nodelay on;
+        types_hash_max_size 2048;
+        client_max_body_size 20M;
+        open_file_cache max=1000;
+
+        #keepalive_timeout  0;
+        keepalive_timeout  65;
+
+        #gzip  on;
+        gzip on;
+        gzip_vary on;
+        gzip_disable "msie6";
+        gzip_comp_level 6;
+        gzip_min_length 1100;
+        gzip_buffers 16 8k;
+        gzip_proxied any;
+        gzip_types
+            text/plain
+            text/css
+            text/js
+            text/xml
+            text/javascript
+            application/javascript
+            application/x-javascript
+            application/json
+            application/xml
+            application/xml+rss;
+
+        large_client_header_buffers 4 32k;
+
+
+        charset UTF-8;
+
+        #server configs are stored in ConfigMap as separate fields
+        include /etc/nginx/openshift/*.conf;
+
+
+    }
+- description: default site template, later you can add more 'files' into config map as well
+  displayName: default.conf 
+  name: NGINX_WWW_CONFIG
+  required: true
+  value: |
+        server {
+            listen 8080 default_server;
+            listen [::]:8080 default_server ipv6only=on;
+
+            #charset koi8-r;
+
+            #access_log  logs/host.access.log  main;
+
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+            }
+
+            #error_page  404              /404.html;
+
+            # redirect server error pages to the static page /50x.html
+            #
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+
+            # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+            #
+            #location ~ \.php$ {
+            #    proxy_pass   http://127.0.0.1;
+            #}
+
+            # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+            #
+            #location ~ \.php$ {
+            #    root           html;
+            #    fastcgi_pass   127.0.0.1:9000;
+            #    fastcgi_index  index.php;
+            #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+            #    include        fastcgi_params;
+            #}
+
+            # deny access to .htaccess files, if Apache's document root
+            # concurs with nginx's one
+            #
+            #location ~ /\.ht {
+            #    deny  all;
+            #}
+        }
+
+
+        # another virtual host using mix of IP-, name-, and port-based configuration
+        #
+        #server {
+        #    listen       8000;
+        #    listen       somename:8080;
+        #    server_name  somename  alias  another.alias;
+
+        #    location / {
+        #        root   html;
+        #        index  index.html index.htm;
+        #    }
+        #}
+
+
+        # HTTPS server
+        #
+        #server {
+        #    listen       443 ssl;
+        #    server_name  localhost;
+
+        #    ssl_certificate      cert.pem;
+        #    ssl_certificate_key  cert.key;
+
+        #    ssl_session_cache    shared:SSL:1m;
+        #    ssl_session_timeout  5m;
+
+        #    ssl_ciphers  HIGH:!aNULL:!MD5;
+        #    ssl_prefer_server_ciphers  on;
+
+        #    location / {
+        #        root   html;
+        #        index  index.html index.htm;
+        #    }
+        #}
+
+        #basic PHP site 
+        #upstream php-upstream { 
+        #    server ${PHP_UPSTREAM}:9000; 
+        #}
+        #server {
+
+        #    listen 80 default_server;
+        #    listen [::]:80 default_server ipv6only=on;
+
+        #    server_name locahost;
+        #    root /var/www/public;
+        #    index index.php index.html index.htm;
+        #
+        #    location / {
+        #         try_files $uri $uri/ /index.php$is_args$args;
+        #    }
+
+        #    location ~ \.php$ {
+        #        try_files $uri /index.php =404;
+        #        fastcgi_pass php-upstream;
+        #        fastcgi_index index.php;
+        #        fastcgi_buffers 16 16k; 
+        #        fastcgi_buffer_size 32k;
+        #        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        #        include fastcgi_params;
+        #    }
+
+        #    location ~ /\.ht {
+        #        deny all;
+        #    }
+            
+        #    location /.well-known/acme-challenge/ {
+        #        root /var/www/letsencrypt/;
+        #        log_not_found off;
+        #    }
+        #}
+
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: nginx
+    name: is-${NGINX_SERVICE_NAME}
+  spec:
+    dockerImageRepository: ""
+    tags:
+      -
+       from:
+         kind: DockerImage
+         name: ${DOCKER_REPOSITORY}:${DOCKER_TAG}
+       name: ${NGINX_SERVICE_NAME}_pseudo_tag
+       importPolicy:
+         scheduled: true
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cm-${NGINX_SERVICE_NAME}-nginx-config
+  data:
+    nginx.conf.template: |
+        ${NGINX_CONFIG}
+    default.conf: |
+        ${NGINX_WWW_CONFIG}
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes the nginx server
+    name: ${NGINX_SERVICE_NAME}
+  spec:
+    ports:
+    - name: 80-http
+      port: 80
+      targetPort: 8080
+    selector:
+      name: ${NGINX_SERVICE_NAME}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: http-${NGINX_SERVICE_NAME}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NGINX_SERVICE_NAME}
+    port:
+      targetPort: 80-http
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the container
+    name: dc-${NGINX_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NGINX_SERVICE_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          name: ${NGINX_SERVICE_NAME}
+        name: ${NGINX_SERVICE_NAME}
+      spec:
+        containers:
+        - image: ' '
+          livenessProbe:
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 8080
+            timeoutSeconds: 1
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          command:
+            - /bin/sh
+            - '-c'
+            - >-
+              mkdir /tmp/nginx &&
+              nginx -c /etc/nginx/openshift/nginx.conf.template -g 'daemon off; pid /tmp/nginx.pid;'
+          image: ' '
+          name: cnt-nginx
+          ports:
+          - containerPort: 8080
+          resources:
+            limits:
+              memory: ${NGINX_MEMORY_LIMIT}
+          volumeMounts:
+          - mountPath: /etc/nginx/openshift
+            name: vol-${NGINX_SERVICE_NAME}-nginx-conf
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        volumes:
+        - configMap:
+            name: cm-${NGINX_SERVICE_NAME}-nginx-config
+          name: vol-${NGINX_SERVICE_NAME}-nginx-conf
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - cnt-nginx
+        from:
+          kind: ImageStreamTag
+          name: is-${NGINX_SERVICE_NAME}:${NGINX_SERVICE_NAME}_pseudo_tag
+        lastTriggeredImage: ""
+      type: ImageChange
+    - type: ConfigChange
+
+
+
+
