@@ -37,8 +37,23 @@ Nginx is run under non-priveledged user account. So, when porting your config pl
  - container can't listen on priveledged TCP ports (<1024), by default used 8080 port
  - nginx can't write to many folder on image, i.e. ```pid```/```client_body_temp_path``` should use /tmp instead 
 
+Configuration 
+==============
+1. Attach storage to deployment and map it to some folder, by example /var/www/path-inside-container
+2. Configure your web server to use /var/www/path-inside-container as root path.
+  ```
+  oc edit cm/cm-nginx-nginx-config
+  ```
+  and have something like
+  ```
+        location / {
+            root   /var/www/path-inside-container;
+			...
+        }
 
-Hostmount
+  ```
+
+Hostmount (optional)
 ==============
 1. Add Security Context Constraints (SCC) for Nginx container to access Node's filesystem
 	```sh

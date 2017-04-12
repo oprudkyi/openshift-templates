@@ -28,8 +28,36 @@ Usage
 
 It will be available under 'PHP' Group in openshift catalog of templates
 
+Configuration 
+==============
+1. Attach storage to deployment and map it to some folder, by example /var/www/path-inside-container
+2. Configure your web server to use /var/www/path-inside-container as root path for server and forward requests to this service.
+  i.e. for nginx :
+  ```
+  oc edit cm/cm-nginx-nginx-config
+  ```
+  and have something like
+  ```
+		location / {
+			try_files $uri $uri/ /index.php$is_args$args;
+		}
 
-Hostmount
+		location ~ \.php$ {
+            root   /var/www/path-inside-container;
+			try_files $uri /index.php =404;
+			fastcgi_pass php-fpm:9000;
+			fastcgi_index index.php;
+			fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+			include fastcgi.conf;
+			#fastcgi_buffers 4 512k; 
+			#fastcgi_buffer_size 512k; 
+			#fastcgi_busy_buffers_size 512k; 
+			...
+        }
+
+  ```
+
+Hostmount (optional)
 ==============
 1. Add Security Context Constraints (SCC) for Nginx container to access Node's filesystem
 	```sh
@@ -54,7 +82,7 @@ or from console
   ```
       volumes:
       - hostPath: 
-          path: /path-inside-opeshift-node
+          path: /path-inside-opeshift-node(host)
         name: vol-my-site
   ```
 
