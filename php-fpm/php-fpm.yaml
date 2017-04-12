@@ -731,8 +731,7 @@ objects:
             - /bin/sh
             - '-c'
             - >-
-              mkdir /tmp/php-fpm &&
-              mv /usr/local/etc/php-fpm.d/php-fpm.conf.template /usr/local/etc/php-fpm.d/php-fpm.conf &&
+              cp /usr/local/etc/php-fpm.d/php-fpm.conf.template /usr/local/etc/php-fpm.conf &&
               php-fpm
           image: ' '
           name: cnt-php-fpm
