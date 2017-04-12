@@ -1,3 +1,7 @@
+#This file is part of https://gitlab.com/oprudkyi/openshift-templates
+#
+#Copyright (c) 2017 Oleksii Prudkyi
+#
 apiVersion: v1
 kind: Template
 labels:
@@ -15,6 +19,7 @@ metadata:
       Based on mysql-ephemeral-template.yml
 
     tags: database
+    openshift.io/display-name: Mysql/Percona/MariaDB (uses hostmount)
   creationTimestamp: null
   name: hostmount-official-mysql-percona-mariadb
 parameters:
@@ -48,7 +53,8 @@ parameters:
   description: Used for fresh database only
 - description: |
     Repositiry of image (mysql, percona or mariadb). Will use https://hub.docker.com/r/library/mysql/ , 
-    https://hub.docker.com/r/library/percona/ or https://hub.docker.com/r/library/mariadb/
+    https://hub.docker.com/r/library/percona/ or https://hub.docker.com/r/library/mariadb/.
+    You may try "oprudkyi/percona-latest" as it fixes https://github.com/docker-library/percona/issues/40
   displayName: Image Repository at Docker Hub
   name: DOCKER_REPOSITORY
   value: "percona"

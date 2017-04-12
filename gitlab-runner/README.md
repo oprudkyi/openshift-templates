@@ -98,7 +98,7 @@ Next steps allow to use local directory `/cache/gitlab-runner` as storage for Mi
 	oc login -u system:admin
 	oc adm policy add-scc-to-user hostmount-anyuid -z sa-minio -n prj-gitlab-runner
 	```
-3. Edit `dc-minio-service` deployment config via OpenSift Web console 
+2. Edit `dc-minio-service` deployment config via OpenSift Web console 
 at https://MASTER-IP:8443/console/project/prj-gitlab-runner/edit/yaml?kind=DeploymentConfig&name=dc-minio-service 
 or from console 
 	```sh
