@@ -38,6 +38,51 @@ Nginx is run under non-priveledged user account. So, when porting your config pl
  - nginx can't write to many folder on image, i.e. ```pid```/```client_body_temp_path``` should use /tmp instead 
 
 
+Hostmount
+==============
+1. Add Security Context Constraints (SCC) for Nginx container to access Node's filesystem
+	```sh
+	oc login -u system:admin
+	oc adm policy add-scc-to-user hostaccess -z sa-nginx -n CURRENT_PROJECT_NAME
+	```
+2. Edit `dc-nginx` deployment config via OpenSift Web console 
+at https://MASTER-IP:8443/console/project/CURRENT_PROJECT_NAME/edit/yaml?kind=DeploymentConfig&name=dc-nginx 
+or from console 
+	```sh
+	oc edit dc/dc-nginx
+	```
+
+  Add, under volumeMounts new mountPath, i.e.
+  ```
+        volumeMounts:
+        - mountPath: /var/www/path-inside-container
+          name: vol-my-site
+  ```
+
+  And, under volumes, 
+  ```
+      volumes:
+      - hostPath: 
+          path: /path-inside-opeshift-node
+        name: vol-my-site
+  ```
+
+  Then you can edit nginx config map and configure it to use /var/www/path-inside-container as root path for server.
+  ```
+  oc edit cm/cm-nginx-nginx-config
+  ```
+  and have something like
+  ```
+        location / {
+            root   /var/www/path-inside-container;
+			...
+        }
+
+  ```
+
+
+
+
 License
 ==============
 

@@ -15,7 +15,7 @@ metadata:
         but can use other images as well.
 
         This is a generic template, that moves Nginx configuration files (nginx.conf etc) into ConfigMap, you will need to configure it 
-        for your needs via ConfigMap and by attaching presistent volumes with static content or forwarding requests to fastcgi services.
+        for your needs via ConfigMap and by attaching persistent volumes with static content or forwarding requests to fastcgi services.
 
     openshift.io/display-name: Nginx
 message: >-
@@ -35,7 +35,7 @@ parameters:
   required: true
   value: nginx
 - description: |
-    Repositiry of Nginx image. Will use https://hub.docker.com/r/library/nginx/  
+    Repository of Nginx image. Will use https://hub.docker.com/r/library/nginx/  
   displayName: Image Repository at Docker Hub
   name: DOCKER_REPOSITORY
   value: "nginx"
@@ -125,6 +125,7 @@ parameters:
             application/xml+rss;
 
         large_client_header_buffers 4 32k;
+        server_names_hash_bucket_size  64;
 
 
         charset UTF-8;
@@ -139,124 +140,124 @@ parameters:
   name: NGINX_WWW_CONFIG
   required: true
   value: |
-        server {
-            listen 8080 default_server;
-            listen [::]:8080 default_server ipv6only=on;
+    server {
+        listen 8080 default_server;
+        listen [::]:8080 default_server ipv6only=on;
 
-            #charset koi8-r;
+        #charset koi8-r;
 
-            #access_log  logs/host.access.log  main;
+        #access_log  logs/host.access.log  main;
 
-            location / {
-                root   /usr/share/nginx/html;
-                index  index.html index.htm;
-            }
-
-            #error_page  404              /404.html;
-
-            # redirect server error pages to the static page /50x.html
-            #
-            error_page   500 502 503 504  /50x.html;
-            location = /50x.html {
-                root   /usr/share/nginx/html;
-            }
-
-            # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-            #
-            #location ~ \.php$ {
-            #    proxy_pass   http://127.0.0.1;
-            #}
-
-            # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-            #
-            #location ~ \.php$ {
-            #    root           html;
-            #    fastcgi_pass   127.0.0.1:9000;
-            #    fastcgi_index  index.php;
-            #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-            #    include        fastcgi_params;
-            #}
-
-            # deny access to .htaccess files, if Apache's document root
-            # concurs with nginx's one
-            #
-            #location ~ /\.ht {
-            #    deny  all;
-            #}
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
         }
 
+        #error_page  404              /404.html;
 
-        # another virtual host using mix of IP-, name-, and port-based configuration
+        # redirect server error pages to the static page /50x.html
         #
-        #server {
-        #    listen       8000;
-        #    listen       somename:8080;
-        #    server_name  somename  alias  another.alias;
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
 
-        #    location / {
-        #        root   html;
-        #        index  index.html index.htm;
-        #    }
-        #}
-
-
-        # HTTPS server
+        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
         #
-        #server {
-        #    listen       443 ssl;
-        #    server_name  localhost;
-
-        #    ssl_certificate      cert.pem;
-        #    ssl_certificate_key  cert.key;
-
-        #    ssl_session_cache    shared:SSL:1m;
-        #    ssl_session_timeout  5m;
-
-        #    ssl_ciphers  HIGH:!aNULL:!MD5;
-        #    ssl_prefer_server_ciphers  on;
-
-        #    location / {
-        #        root   html;
-        #        index  index.html index.htm;
-        #    }
+        #location ~ \.php$ {
+        #    proxy_pass   http://127.0.0.1;
         #}
 
-        #basic PHP site 
-        #upstream php-upstream { 
-        #    server ${PHP_UPSTREAM}:9000; 
-        #}
-        #server {
-
-        #    listen 80 default_server;
-        #    listen [::]:80 default_server ipv6only=on;
-
-        #    server_name locahost;
-        #    root /var/www/public;
-        #    index index.php index.html index.htm;
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         #
-        #    location / {
-        #         try_files $uri $uri/ /index.php$is_args$args;
-        #    }
-
-        #    location ~ \.php$ {
-        #        try_files $uri /index.php =404;
-        #        fastcgi_pass php-upstream;
-        #        fastcgi_index index.php;
-        #        fastcgi_buffers 16 16k; 
-        #        fastcgi_buffer_size 32k;
-        #        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        #        include fastcgi_params;
-        #    }
-
-        #    location ~ /\.ht {
-        #        deny all;
-        #    }
-            
-        #    location /.well-known/acme-challenge/ {
-        #        root /var/www/letsencrypt/;
-        #        log_not_found off;
-        #    }
+        #location ~ \.php$ {
+        #    root           html;
+        #    fastcgi_pass   127.0.0.1:9000;
+        #    fastcgi_index  index.php;
+        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+        #    include        fastcgi_params;
         #}
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        #location ~ /\.ht {
+        #    deny  all;
+        #}
+    }
+
+
+    # another virtual host using mix of IP-, name-, and port-based configuration
+    #
+    #server {
+    #    listen       8000;
+    #    listen       somename:8080;
+    #    server_name  somename  alias  another.alias;
+
+    #    location / {
+    #        root   html;
+    #        index  index.html index.htm;
+    #    }
+    #}
+
+
+    # HTTPS server
+    #
+    #server {
+    #    listen       443 ssl;
+    #    server_name  localhost;
+
+    #    ssl_certificate      cert.pem;
+    #    ssl_certificate_key  cert.key;
+
+    #    ssl_session_cache    shared:SSL:1m;
+    #    ssl_session_timeout  5m;
+
+    #    ssl_ciphers  HIGH:!aNULL:!MD5;
+    #    ssl_prefer_server_ciphers  on;
+
+    #    location / {
+    #        root   html;
+    #        index  index.html index.htm;
+    #    }
+    #}
+
+    #basic PHP site 
+    #upstream php-upstream { 
+    #    server ${PHP_UPSTREAM}:9000; 
+    #}
+    #server {
+
+    #    listen 8080 default_server;
+    #    listen [::]:8080 default_server ipv6only=on;
+
+    #    server_name locahost;
+    #    root /var/www/public;
+    #    index index.php index.html index.htm;
+    #
+    #    location / {
+    #         try_files $uri $uri/ /index.php$is_args$args;
+    #    }
+
+    #    location ~ \.php$ {
+    #        try_files $uri /index.php =404;
+    #        fastcgi_pass php-upstream;
+    #        fastcgi_index index.php;
+    #        fastcgi_buffers 16 16k; 
+    #        fastcgi_buffer_size 32k;
+    #        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    #        include fastcgi_params;
+    #    }
+
+    #    location ~ /\.ht {
+    #        deny all;
+    #    }
+        
+    #    location /.well-known/acme-challenge/ {
+    #        root /var/www/letsencrypt/;
+    #        log_not_found off;
+    #    }
+    #}
 
 objects:
 - apiVersion: v1
