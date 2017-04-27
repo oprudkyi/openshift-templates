@@ -181,7 +181,7 @@ parameters:
     ; Relative path can also be used. They will be prefixed by:
     ;  - the global prefix if it's been set (-p argument)
     ;  - /usr/local otherwise
-    include=etc/php-fpm.d/*.conf
+    include=/usr/local/etc/php-fpm.d/*.conf
 
 - description: php-fpm.d/www.conf template. It will be copied to config map and used instead of /etc/php-fpm/php-fpm.d/www.conf 
   displayName: www.conf 
@@ -731,8 +731,7 @@ objects:
             - /bin/sh
             - '-c'
             - >-
-              cp /usr/local/etc/php-fpm.d/php-fpm.conf.template /usr/local/etc/php-fpm.conf &&
-              php-fpm
+              php-fpm --fpm-config /usr/local/etc/php-fpm.d/php-fpm.conf.template
           image: ' '
           name: cnt-php-fpm
           ports:
