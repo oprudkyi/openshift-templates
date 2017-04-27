@@ -36,7 +36,8 @@ Configuration
   ```
   oc edit cm/cm-nginx-nginx-config
   ```
-  and have something like
+  and add something like
+
   ```
 		location / {
 			try_files $uri $uri/ /index.php$is_args$args;
@@ -54,8 +55,8 @@ Configuration
 			#fastcgi_busy_buffers_size 512k; 
 			...
         }
-
   ```
+
 
 Hostmount (optional)
 ==============
