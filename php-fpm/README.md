@@ -32,7 +32,7 @@ Configuration
 ==============
 1. Attach storage to deployment and map it to some folder, by example /var/www/path-inside-container
 2. Configure your web server to use /var/www/path-inside-container as root path for server and forward requests to this service.
-  i.e. for nginx :
+  i.e. for [nginx](https://gitlab.com/oprudkyi/openshift-templates/tree/master/nginx) :
   ```
   oc edit cm/cm-nginx-nginx-config
   ```

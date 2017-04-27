@@ -39,12 +39,14 @@ Nginx is run under non-priveledged user account. So, when porting your config pl
 
 Configuration 
 ==============
-1. Attach storage to deployment and map it to some folder, by example /var/www/path-inside-container
+1. Attach storage to deployment and map it to some folder, by example /var/www/path-inside-container. 
 2. Configure your web server to use /var/www/path-inside-container as root path.
   ```
   oc edit cm/cm-nginx-nginx-config
   ```
-  and have something like
+
+  and add something like
+
   ```
         location / {
             root   /var/www/path-inside-container;
@@ -95,6 +97,56 @@ or from console
 
   ```
 
+PHP
+==============
+
+Basic PHP site.
+
+Please note, advanced php frameworks (Laravel) tends to cache full paths, so, if you are planning to use command 
+tools from host and from container simultaneously (by example run composer/artisan on host node), then you should use the same path inside containers (php,nginx) and hostnode. 
+
+
+Configure ConfigMap (default.conf) 
+
+  ```
+  oc edit cm/cm-nginx-nginx-config
+  ```
+
+  Replace it with 
+  ```
+    upstream php-upstream { 
+        server php:9000; 
+    }
+    server {
+
+        listen 8080 default_server;
+        listen [::]:8080 default_server ipv6only=on;
+
+        server_name locahost;
+        root /var/www/path-inside-container/public;
+        index index.php index.html index.htm;
+    
+        location / {
+             try_files $uri $uri/ /index.php$is_args$args;
+        }
+
+        location ~ \.php$ {
+            try_files $uri /index.php =404;
+            fastcgi_pass php-upstream;
+            fastcgi_index index.php;
+            fastcgi_buffers 16 16k; 
+            fastcgi_buffer_size 32k;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include /etc/nginx/fastcgi_params;
+        }
+
+        location ~ /\.ht {
+            deny all;
+        }
+    }
+  ```
+
+Setup [PHP-FPM image](https://gitlab.com/oprudkyi/openshift-templates/tree/master/php-fpm)   
 
 
 
