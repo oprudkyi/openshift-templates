@@ -1,7 +1,7 @@
 [OpenShift Origin](https://www.openshift.org/) template for [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner)
 ==============
 
-This is a template for easy deployment of GitLab Runner CI into OpenShift cluster 
+This is a template for easy deployment of GitLab Runner CI into OpenShift cluster (Openshift Online isn't supported) 
 
  - uses official [GitLab Runner](https://gitlab.com/gitlab-org/gitlab-ci-multi-runner) image from [gitlab docker repo](https://hub.docker.com/r/gitlab/gitlab-runner/) 
  - caching is implemented via official [Minio Cloud Storage](https://www.minio.io/) image from [minio docker repo](https://hub.docker.com/r/minio/minio/)
@@ -31,7 +31,7 @@ Prerequisites
 	token = "..."
  ```
 
- - [OpenShift Origin](https://www.openshift.org/) (The template is tested with [All-in-one cluster binary](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md), thought it might work with [Red Hat OpenShift](https://www.openshift.com/) as well
+ - [OpenShift Origin](https://www.openshift.org/) (The template is tested with [All-in-one cluster binary](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md), it won't work on the [Openshift Online](https://www.openshift.com/) 
  - admin access to server for setting rights for service account 
 
 
