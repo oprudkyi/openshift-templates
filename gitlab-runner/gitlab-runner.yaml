@@ -14,10 +14,10 @@ labels:
 metadata:
   annotations:
     description: |
-      GitLab Runner Service. 
+      GitLab Runner Service.
       It uses GitLab Runner image from official repository at docker hub.
       https://hub.docker.com/r/gitlab/gitlab-runner/
-      Before you start, please setup Security Context Constraints (SCC) for service accounts used for running 
+      Before you start, please setup Security Context Constraints (SCC) for service accounts used for running
       containers (anyuid means commands inside containers can run as root)
         oc login -u system:admin
         oc adm policy add-scc-to-user anyuid -z sa-gitlab-runner -n CURRENT_PROJECT_NAME
@@ -109,14 +109,14 @@ objects:
             exec:
               command:
               - /usr/bin/pgrep
-              - gitlab-ci-multi
+              - gitlab-runner
             initialDelaySeconds: 5
             timeoutSeconds: 1
           livenessProbe:
             exec:
               command:
               - /usr/bin/pgrep
-              - gitlab-ci-multi
+              - gitlab-runner
             initialDelaySeconds: 5
             timeoutSeconds: 1
           name: cnt-gitlab-runner
@@ -124,7 +124,7 @@ objects:
           - containerPort: 22
             protocol: TCP
           args:
-              - run 
+              - run
               -  --working-directory
               - /home/gitlab-runner
               -  --config
@@ -170,7 +170,7 @@ objects:
     config.toml: |
       concurrent = ${GITLAB_RUNNER_JOBS}
       check_interval = 0
-  
+
       [[runners]]
         name = "GitLab Runner"
         url = "${GITLAB_RUNNER_CI_URL}"
@@ -335,11 +335,11 @@ parameters:
   name: GITLAB_RUNNER_TOKEN
   required: true
 
-- description: "The namespace/project where actual runners will run (requires correct scc/role config). Use current project name if unsure. " 
+- description: "The namespace/project where actual runners will run (requires correct scc/role config). Use current project name if unsure. "
   displayName: GitLab Runners Namespace
   name: GITLAB_RUNNER_NAMESPACE
   required: true
-  
+
 - description: The count of jobs can be run concurrently.
   displayName: GitLab Runner jobs
   name: GITLAB_RUNNER_JOBS
@@ -357,7 +357,7 @@ parameters:
   required: true
   value: gitlab-runner-service
 
-- description: Tag of GitLab Runner image (alpine or latest). Check https://hub.docker.com/r/gitlab/gitlab-runner/tags/ for list of supported values 
+- description: Tag of GitLab Runner image (alpine or latest). Check https://hub.docker.com/r/gitlab/gitlab-runner/tags/ for list of supported values
   displayName: GitLab Runner Image Tag at Docker Hub
   name: GITLAB_RUNNER_IMAGE_DOCKER_TAG
   value: "alpine"
@@ -368,7 +368,7 @@ parameters:
   required: true
   value: minio-service
 
-- description: Tag of Minio Cloud Storage image (latest or edge). Check https://hub.docker.com/r/minio/minio/tags/ for list of supported values 
+- description: Tag of Minio Cloud Storage image (latest or edge). Check https://hub.docker.com/r/minio/minio/tags/ for list of supported values
   displayName: Minio Cloud Storage Image Tag at Docker Hub
   name: MINIO_IMAGE_DOCKER_TAG
   value: "latest"
@@ -384,4 +384,3 @@ parameters:
   name: MINIO_SECRET_KEY
   from: '[a-zA-Z0-9]{40}'
   generate: expression
-
