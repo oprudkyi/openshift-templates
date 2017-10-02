@@ -287,9 +287,8 @@ objects:
               value: ${MINIO_SECRET_KEY}
           command:
             - /bin/sh
-            - '-c'
-            - >-
-              /bin/mkdir -p /export/bkt-gitlab-runner ; /usr/bin/minio server /export
+            - -c
+            - /bin/mkdir -p /export/bkt-gitlab-runner ; minio server /export
           resources:
             limits:
               cpu: 100m
