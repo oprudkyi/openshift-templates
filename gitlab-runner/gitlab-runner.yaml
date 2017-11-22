@@ -289,7 +289,7 @@ objects:
             - /bin/sh
             - '-c'
             - >-
-              /bin/mkdir /export/bkt-gitlab-runner ; /go/bin/minio server /export
+              /bin/mkdir -p /export/bkt-gitlab-runner ; /usr/bin/minio server /export
           resources:
             limits:
               cpu: 100m
