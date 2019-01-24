@@ -94,6 +94,7 @@ objects:
             exec:
               command:
               - /usr/bin/pgrep
+              - -f
               - mailcatcher
             initialDelaySeconds: 5
             timeoutSeconds: 1
